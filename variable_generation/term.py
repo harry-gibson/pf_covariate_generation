@@ -1,15 +1,18 @@
 import os, glob
 from datetime import date
 from dateutil.relativedelta import relativedelta
+import sys
+sys.path.insert(0, r'C:\Users\zool1301.NDPH\Documents\Code_General\MAP-raster-utilities')
 
 from raster_utilities.utils.geotransform_calcs import CalculatePixelLims
-from raster_utilities.io.tiff_management.tiff_cube import TiffCube, CubeResolutions, CubeLevels
+from raster_utilities.cubes.tiff_cube import TiffCube
+from raster_utilities.cubes.cube_constants import CubeResolutions, CubeLevels
 from raster_utilities.aggregation.aggregation_values import TemporalAggregationStats, ContinuousAggregationStats
 
 ONEMONTH = relativedelta(months=1)
 
-
-class TemporalAnomalyTypes:
+from enum import Enum
+class TemporalAnomalyTypes(Enum):
     DIFF_SYNOPTIC_ANNUAL = "Difference from synoptic annual"
     DIFF_SYNOPTIC_MONTHLY = "Difference from synoptic monthly"
     NONE = "None"
