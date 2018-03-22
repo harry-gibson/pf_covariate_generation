@@ -7,7 +7,8 @@ sys.path.insert(0, r'C:\Users\zool1301.NDPH\Documents\Code_General\MAP-raster-ut
 from raster_utilities.utils.geotransform_calcs import CalculatePixelLims
 from raster_utilities.cubes.tiff_cube import TiffCube
 from raster_utilities.cubes.cube_constants import CubeResolutions, CubeLevels
-from raster_utilities.aggregation.aggregation_values import TemporalAggregationStats, ContinuousAggregationStats
+from raster_utilities.aggregation.aggregation_values import TemporalAggregationStats, ContinuousAggregationStats, \
+    CategoricalAggregationStats
 
 ONEMONTH = relativedelta(months=1)
 
@@ -17,35 +18,45 @@ class TemporalAnomalyTypes(Enum):
     DIFF_SYNOPTIC_MONTHLY = "Difference from synoptic monthly"
     NONE = "None"
 
-class FiveKCovariateVariableTerm:
-    # Pass a folder "MasterFolder" which should contain Annual, Monthly, Synoptic folders, or as necessary for the
+class CovariateVariableTerm:
+    # Pass a folder "CubeFolder" which should contain a folder structure corresponding to the MAP specification for a
+    # mastergrid covariate (See the MAP wiki). It should contain a subfolder corresponding to the chosen resolution and
+    # this should contain Annual, Monthly, Synoptic folders, or as necessary for the
     # chosen SpatialSummaryType and TemporalSummaryType.
 
     # Monthly folder has files with names like {VariableName}.{Year}.{Month}.{TemporalSummary}.{Res}.{SpatialSummary}.tif
     # Annual folder has files with names like {VariableName}.{Year}.Annual.{TemporalSummary}.{Res}.{SpatialSummary}.tif
     # Synoptic folder has files with names like {VariableName}.Synoptic.{Month / Overall}.{Res}.{SpatialSummary}.tif
 
-    def __init__(self, Name, MasterFolder, CubeLevel, SpatialSummaryType,
-                    TemporalSummaryType = TemporalAggregationStats.MEAN,
-                    TemporalAnomalyType = TemporalAnomalyTypes.NONE,
-                    TemporalLagMonths = 0):
+    def __init__(self, Name, MasterFolder,
+                 CubeResolution, CubeLevel,
+                 SpatialSummaryStat,
+                 TemporalSummaryStat = TemporalAggregationStats.MEAN,
+                 TemporalAnomalyType = TemporalAnomalyTypes.NONE,
+                 TemporalLagMonths = 0,
+                 AdjustmentOffset = 0):
+        assert isinstance(CubeResolution, CubeResolutions)
         assert isinstance(CubeLevel, CubeLevels) # Monthly, Annual, Synoptic, Static? General cube descriptor.
-        assert isinstance(SpatialSummaryType, ContinuousAggregationStats) # Mean, SD, ...? General cube descriptor.
-        assert isinstance(TemporalSummaryType, TemporalAggregationStats) # Mean, SD, ...? General cube descriptor.
+        assert (isinstance(SpatialSummaryStat, ContinuousAggregationStats)
+                or isinstance(SpatialSummaryStat, CategoricalAggregationStats))# Mean, SD, ...? General cube descriptor.
+        assert isinstance(TemporalSummaryStat, TemporalAggregationStats) # Mean, SD, ...? General cube descriptor.
 
         assert isinstance(TemporalAnomalyType, TemporalAnomalyTypes) # Specific to the Pf covars work
         assert TemporalLagMonths >= 0 and TemporalLagMonths <= 12
         self.Name = Name
-
+        self._CubeResolution = CubeResolution
         self._CubeLevel = CubeLevel
-        self._SpatialSummaryType = SpatialSummaryType
-        self._TemporalSummaryType = TemporalSummaryType
+        self._SpatialSummaryStat = SpatialSummaryStat
+        self._TemporalSummaryStat = TemporalSummaryStat
         self._TemporalAnomalyType = TemporalAnomalyType
         self._TemporalLagMonths = TemporalLagMonths
+        self._AdjustmentOffset = AdjustmentOffset
         self._InitialiseCube(MasterFolder)
 
     def _InitialiseCube(self, MasterFolder):
-        myCube = TiffCube(MasterFolder, CubeResolutions.FIVE_K, self._TemporalSummaryType, self._SpatialSummaryType)
+        # the cube object will populate itself with whatever is available for temporal summary levels, i.e.
+        # monthly, annual, synoptic (any combination) or static
+        myCube = TiffCube(MasterFolder, self._CubeResolution, self._TemporalSummaryStat, self._SpatialSummaryStat)
         self.DataCube = myCube
 
     def GetOffsetDate(self, RequiredOutputDate):
@@ -62,13 +73,16 @@ class FiveKCovariateVariableTerm:
         '''
 
         dataDate = self.GetOffsetDate(RequiredDate)
-        # The Cube object figures out what file to read based on the CubeLevel and the Date (or "None")
+        # The Cube object figures out what file to read based on the CubeLevel and the Date (or "None"), including if
+        # it's a static variable
         dataArr, _gt, _proj, _ndv = self.DataCube.ReadDataForDate(self._CubeLevel, dataDate)
+        # some of the Pf terms are actually calculated in terms of difference between a monthly dynamic value and a
+        # long-term average i.e. synoptic.
+        # If not, then just return what we've read
         if self._TemporalAnomalyType == TemporalAnomalyTypes.NONE:
             return dataArr
-
-        # The same Cube provides access to the synoptic data from which this (presumably dynamic) term is
-        # differenced against
+        # If we do neeed to calculate an anomaly, then use the same Cube to provide access to the synoptic data
+        # from which this (presumably dynamic) term is differenced against
         elif self._TemporalAnomalyType == TemporalAnomalyTypes.DIFF_SYNOPTIC_MONTHLY:
             secondaryArray = self.DataCube.ReadDataForDate(CubeLevels.SYNOPTIC, dataDate)
         elif self._TemporalAnomalyType == TemporalAnomalyTypes.DIFF_SYNOPTIC_ANNUAL:
