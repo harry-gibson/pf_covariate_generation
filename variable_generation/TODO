@@ -1,0 +1,10 @@
+Outstanding input covariate preparation tasks for Pf covar generation
+
+* Format landcover into per-class structure
+* Format landcover filenames
+* Format PET into a folder structure
+* Format PrecA0 into a folder structure
+* Generate slope classification grids and file appropriately
+* Format elevation into a folder structure
+* Resummarise diurnal diff and rename
+* Resummarise TSI and rename
