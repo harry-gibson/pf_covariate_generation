@@ -15,22 +15,38 @@ class TransformTypes(Enum):
     T10 = "BoxCox"
     T11 = "AbsNormal"
 
+
 class TransformAndAdjust:
-    def __init__(self, transformType, adjustmentOffset = 0):
-        assert isinstance(transformType, TransformTypes)
+    def __init__(self, transformType, adjustmentOffset = 0, meanValue=None, stdValue=None, lambdaValue=None):
+        if not isinstance(transformType, TransformTypes):
+            transformType = TransformTypes(transformType)  # or raise valueerror
+
+        if (transformType == TransformTypes.T2 or
+            transformType == TransformTypes.T11):
+            if meanValue is None or stdValue is None:
+                raise ValueError("Mean and std values must be provided for transform " + transformType.value)
+            self._meanValue = meanValue
+            self._stdValue = stdValue
+        if transformType == TransformTypes.T10:
+            if lambdaValue is None:
+                raise ValueError("Lambda value is required for BoxCox transform")
+            self._lambdaValue = lambdaValue
+        # TODO more checking, that they're the same size etc
         self.TransformType = transformType
         self.AdjustmentOffset = adjustmentOffset
 
-    def Apply(self, dataArr, meanArr = None, stdArr = None):
-        if (self.TransformType == TransformTypes.T2 or
-            self.TransformType == TransformTypes.T11):
-            assert (meanArr is not None) and (stdArr is not None)
-            # TODO more checking, that they're the same size etc
+    def GetNumexprString(self, varname):
+        pass
+
+    def ApplyToData(self, dataArr):
+
         adjOffset = self.AdjustmentOffset
         if self.TransformType == TransformTypes.T1:
             expr = "dataArr + adjOffset"
         elif self.TransformType == TransformTypes.T2:
-            expr = "((dataArr + adjOffset) - meanArr) / stdArr"
+            meanValue = self._meanValue
+            stdValue = self._stdValue
+            expr = "((dataArr + adjOffset) - meanValue) / stdValue"
         elif self.TransformType == TransformTypes.T3:
             expr = "1.0 / (dataArr + adjOffset)"
         elif self.TransformType == TransformTypes.T4:
@@ -46,9 +62,13 @@ class TransformAndAdjust:
         elif self.TransformType == TransformTypes.T9:
             expr = "(dataArr + adjOffset) ** (1.0/3)"
         elif self.TransformType == TransformTypes.T10:
-            return "whatthefuck" # TODO whatthefuck
+            #return "whatthefuck" # TODO whatthefuck
+            lambdaValue = self._lambdaValue or None
+            expr = "(dataArr + adjOffset) ** lambdaValue"
         elif self.TransformType == TransformTypes.T11:
-            expr = "((dataArr + adjOffset) - meanArr) / stdArr"
+            meanValue = self._meanValue
+            stdValue = self._stdValue
+            expr = "((dataArr + adjOffset) - meanValue) / stdValue"
         else:
             raise ValueError()
         return ne.evaluate(expr)
