@@ -5,16 +5,16 @@ T3A,EVI,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD43B4_BRDF_R
 T3B,EVI,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD43B4_BRDF_Reflectance\EVI,5km,mean,Monthly,mean,Difference from synoptic annual,0
 T3C,EVI,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD43B4_BRDF_Reflectance\EVI,5km,mean,Monthly,mean,Difference from synoptic annual,4
 T4,EVI,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD43B4_BRDF_Reflectance\EVI,5km,min,Monthly,mean,Difference from synoptic monthly,
-T5,LC12,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD12Q1_Annual_Landcover\5km,5km,fraction,Annual,Data,,
-T6,LC13,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD12Q1_Annual_Landcover\5km,5km,fraction,Annual,Data,,
-T7,LC14,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD12Q1_Annual_Landcover\5km,5km,fraction,Annual,Data,,
+T5,LC12,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD12Q1_Annual_Landcover\IGBP_Landcover_Class12,5km,percentage,Annual,Data,,
+T6,LC13,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD12Q1_Annual_Landcover\IGBP_Landcover_Class13,5km,percentage,Annual,Data,,
+T7,LC14,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD12Q1_Annual_Landcover\IGBP_Landcover_Class14,5km,percentage,Annual,Data,,
 T8,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,max,Synoptic,mean,,
 T9,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,mean,Synoptic,SD,,1
 T10A,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,range,Synoptic,mean,,1
 T10B,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,range,Synoptic,mean,,4
 T10C,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,range,Synoptic,mean,,4
-T11,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,std,Synoptic,mean,,2
-T12,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,std,Synoptic,SD,,3
+T11,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,SD,Synoptic,mean,,2
+T12,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,SD,Synoptic,SD,,3
 T13,LST_night,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Night,5km,mean,Synoptic,mean,,
 T14,LST_night,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Night,5km,mean,Monthly,mean,Difference from synoptic annual,
 T15,LST_night,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Night,5km,min,Synoptic,SD,,4
@@ -33,6 +33,6 @@ T27,TCB,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD43B4_BRDF_R
 T28A,TCW,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD43B4_BRDF_Reflectance\TCW,5km,min,Monthly,mean,,4
 T28B,TCW,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD43B4_BRDF_Reflectance\TCW,5km,min,Monthly,mean,,0
 T29,TCW,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD43B4_BRDF_Reflectance\TCW,5km,range,Synoptic,mean,,2
-T30,TCW,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD43B4_BRDF_Reflectance\TCW,5km,std,Monthly,mean,,3
-T31,TSI,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\Other_Global_Covariates\TemperatureSuitability\TSI_Pf_Dynamic,5km,mean,Synoptic,SD,,2
-T32,TSI,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\Other_Global_Covariates\TemperatureSuitability\TSI_Pf_Dynamic,5km,min,Monthly,mean,,3
+T30,TCW,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MCD43B4_BRDF_Reflectance\TCW,5km,SD,Monthly,mean,,3
+T31,TSI,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\Other_Global_Covariates\TemperatureSuitability\TSI_Pf_Dynamic,5km,Data,Synoptic,SD,,2
+T32,TSI,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\Other_Global_Covariates\TemperatureSuitability\TSI_Pf_Dynamic,5km,Data,Monthly,Data,,3
