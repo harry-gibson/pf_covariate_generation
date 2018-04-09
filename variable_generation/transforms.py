@@ -23,17 +23,20 @@ class TransformAndAdjust:
 
         if (transformType == TransformTypes.T2 or
             transformType == TransformTypes.T11):
-            if meanValue is None or stdValue is None:
+            if meanValue is None or stdValue is None or meanValue == '' or stdValue == '':
                 raise ValueError("Mean and std values must be provided for transform " + transformType.value)
-            self._meanValue = meanValue
-            self._stdValue = stdValue
+            self._meanValue = float(meanValue)
+            self._stdValue = float(stdValue)
         if transformType == TransformTypes.T10:
-            if lambdaValue is None:
+            if lambdaValue is None or lambdaValue == '':
                 raise ValueError("Lambda value is required for BoxCox transform")
-            self._lambdaValue = lambdaValue
+            self._lambdaValue = float(lambdaValue)
         # TODO more checking, that they're the same size etc
         self.TransformType = transformType
-        self.AdjustmentOffset = adjustmentOffset
+        self.AdjustmentOffset = float(adjustmentOffset)
+
+    def log(self, message):
+        print(message)
 
     def GetNumexprString(self, varname):
         pass
@@ -62,7 +65,6 @@ class TransformAndAdjust:
         elif self.TransformType == TransformTypes.T9:
             expr = "(dataArr + adjOffset) ** (1.0/3)"
         elif self.TransformType == TransformTypes.T10:
-            #return "whatthefuck" # TODO whatthefuck
             lambdaValue = self._lambdaValue or None
             expr = "(dataArr + adjOffset) ** lambdaValue"
         elif self.TransformType == TransformTypes.T11:
@@ -71,4 +73,5 @@ class TransformAndAdjust:
             expr = "((dataArr + adjOffset) - meanValue) / stdValue"
         else:
             raise ValueError()
+        self.log("Applying expression " + expr)
         return ne.evaluate(expr)
