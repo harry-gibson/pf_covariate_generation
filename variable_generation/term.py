@@ -3,6 +3,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 import sys
 import numexpr as ne
+import numpy
 sys.path.insert(0, r'C:\Users\zool1301.NDPH\Documents\Code_General\MAP-raster-utilities')
 
 from raster_utilities.utils.geotransform_calcs import CalculatePixelLims
@@ -31,8 +32,8 @@ class CovariateVariableTerm:
 
     def __init__(self, Name, MasterFolder,
                  CubeResolution, CubeLevel,
-                 SpatialSummaryStat,
-                 TemporalSummaryStat = TemporalAggregationStats.MEAN,
+                 SpatialSummaryType,
+                 TemporalSummaryType = TemporalAggregationStats.MEAN,
                  TemporalAnomalyType = TemporalAnomalyTypes.NONE,
                  TemporalLagMonths = 0,
                  AdjustmentOffset = 0,
@@ -45,27 +46,33 @@ class CovariateVariableTerm:
         if not isinstance(CubeLevel, CubeLevels):
             # Monthly, Annual, Synoptic, Static? General cube descriptor.
             CubeLevel = CubeLevels(CubeLevel)
-        if not (isinstance(SpatialSummaryStat, ContinuousAggregationStats)
-                or isinstance(SpatialSummaryStat, CategoricalAggregationStats)):
+        if not (isinstance(SpatialSummaryType, ContinuousAggregationStats)
+                or isinstance(SpatialSummaryType, CategoricalAggregationStats)):
             # Mean, SD, ...? General cube descriptor used to pick which spatial summary we are looking at in
             # filtering files
             try:
-                SpatialSummaryStat = ContinuousAggregationStats(SpatialSummaryStat)
+                SpatialSummaryType = ContinuousAggregationStats(SpatialSummaryType)
             except ValueError as e:
                 try:
-                    SpatialSummaryStat = CategoricalAggregationStats(SpatialSummaryStat)
+                    SpatialSummaryType = CategoricalAggregationStats(SpatialSummaryType)
                 except ValueError:
-                    raise ValueError(str(SpatialSummaryStat) + " is not a valid continuous or categorical aggregation")
-        if not isinstance(TemporalSummaryStat, TemporalAggregationStats):
+                    raise ValueError(str(SpatialSummaryType) + " is not a valid continuous or categorical aggregation")
+        if not isinstance(TemporalSummaryType, TemporalAggregationStats):
             # Mean, SD, ...? General cube descriptor used to pick which temporal summary we are looking at in
             # choosing a folder; for the Pf covariates work this is currently always mean for dynamic covars
-            TemporalSummaryStat = TemporalAggregationStats(TemporalSummaryStat)
+            TemporalSummaryType = TemporalAggregationStats(TemporalSummaryType)
         if not isinstance(TemporalAnomalyType, TemporalAnomalyTypes):
             # Specific to the Pf covars work, are we looking at dynamic values or the difference between dynamic
             # values and some long-term summary of them
-            TemporalAnomalyType = TemporalAnomalyTypes(TemporalAnomalyType)
+            try:
+                TemporalAnomalyType = TemporalAnomalyTypes(TemporalAnomalyType)
+            except ValueError:
+                TemporalAnomalyType = TemporalAnomalyTypes.NONE
         if not isinstance(TemporalLagMonths, int):
-            TemporalLagMonths = int(TemporalLagMonths)
+            try:
+                TemporalLagMonths = int(TemporalLagMonths)
+            except ValueError:
+                TemporalLagMonths = 0
         if not (TemporalLagMonths >= 0 and TemporalLagMonths <= 12):
             raise ValueError("Lag must be between 0 and 12 months (integer)")
         if not (Transform is None or isinstance(Transform, TransformAndAdjust)):
@@ -74,8 +81,8 @@ class CovariateVariableTerm:
         self.Name = Name
         self._CubeResolution = CubeResolution
         self._CubeLevel = CubeLevel
-        self._SpatialSummaryStat = SpatialSummaryStat
-        self._TemporalSummaryStat = TemporalSummaryStat
+        self._SpatialSummaryStat = SpatialSummaryType
+        self._TemporalSummaryStat = TemporalSummaryType
         self._TemporalAnomalyType = TemporalAnomalyType
         self._TemporalLagMonths = TemporalLagMonths
         self._AdjustmentOffset = AdjustmentOffset
@@ -91,58 +98,81 @@ class CovariateVariableTerm:
     def GetOffsetDate(self, RequiredOutputDate):
         if RequiredOutputDate is None:
             return None
+        if self._TemporalLagMonths == 0:
+            return RequiredOutputDate
         DataMonth = RequiredOutputDate - self._TemporalLagMonths * ONEMONTH
         return DataMonth
 
-
-
-    def ReadDataForDate(self, RequiredDate, maskNoData=False):
+    def GenerateDataForDate(self, RequiredDate, lonLims=None, latLims=None, maskNoData=False):
         '''produces an array of data representing the content of the required term for this date
 
-        This takes into account the temporal summary, anomaly, and lag as appropriate for this term.
+        This takes into account the temporal summary, anomaly, temporal lag, and transform as appropriate for this term.
         These are applied in the following order:
-        1: read data, 2: apply anomaly if required, 3: apply offset, 4: apply transform
+        1: apply lag to requested date, 2: read data, 3: apply anomaly if required, 4: apply offset, 5: apply transform
+        The reading and anomaly calculation we apply here
         Date may be None if CubeLevel is synoptic, in which case the overall synoptic data will be read.
 
         '''
-
+        if RequiredDate is None:
+            cubeLevel = CubeLevels.STATIC # TODO what we gonna do here
+        else:
+            cubeLevel = self._CubeLevel
         dataDate = self.GetOffsetDate(RequiredDate)
         # The Cube object figures out what file to read based on the CubeLevel and the Date (or "None"), including if
-        # it's a static variable
-        dataArr, _gt, _proj, _ndv = self.DataCube.ReadDataForDate(self._CubeLevel, dataDate, maskNoData=maskNoData)
+        # it's a static variable. Read the "main" data for this term / date
+        print("Requesting cube object to read data for actual date "+str(dataDate))
+        dataArr, _gt, _proj, _ndv = self.DataCube.ReadDataForDate(cubeLevel, dataDate,
+                                                                  maskNoData=maskNoData,
+                                                                  lonLims=lonLims, latLims=latLims,
+                                                                  useClosestAvailableYear=True)
+        if _ndv is not None:
+            ndMask = dataArr == _ndv
+        else:
+            ndMask = False
+        if self._SpatialSummaryStat == CategoricalAggregationStats.PERCENTAGE:
+            dataArr = dataArr / 100.0
         # some of the Pf terms are actually calculated in terms of difference between a monthly dynamic value and a
         # long-term average i.e. synoptic.
-        # If not, then just return what we've read
         isAnomaly = True
         if self._TemporalAnomalyType == TemporalAnomalyTypes.NONE:
             isAnomaly = False
-        # If we do neeed to calculate an anomaly, then use the same Cube to provide access to the synoptic data
-        # from which this (presumably dynamic) term is differenced against
-
+        # If we need to calculate an anomaly, then use the same Cube to provide access to the synoptic data
+        # from which this (presumably dynamic) term is differenced against. Use caching for the read of the synoptic
+        # data so we don't have to re-read that file every time
         elif self._TemporalAnomalyType == TemporalAnomalyTypes.DIFF_SYNOPTIC_MONTHLY:
-            secondaryArray, _, _, _ = self.DataCube.ReadDataForDate(CubeLevels.SYNOPTIC, dataDate, maskNoData=maskNoData)
+            secondaryArray, _, _, _ndSecondary = self.DataCube.ReadDataForDate(CubeLevels.SYNOPTIC, dataDate,
+                                                                    maskNoData=maskNoData, cacheThisRead = True,
+                                                                    lonLims=lonLims, latLims=latLims)
+            if _ndSecondary is not None:
+                ndMask = ndMask + (secondaryArray == _ndSecondary)
+            if self._SpatialSummaryStat == CategoricalAggregationStats.PERCENTAGE:
+                dataArr = dataArr / 100.0
         elif self._TemporalAnomalyType == TemporalAnomalyTypes.DIFF_SYNOPTIC_ANNUAL:
-            secondaryArray, _, _, _ = self.DataCube.ReadDataForDate(CubeLevels.SYNOPTIC, None, maskNoData=maskNoData)
+            secondaryArray, _, _, _ndSecondary = self.DataCube.ReadDataForDate(CubeLevels.SYNOPTIC, None,
+                                                                    maskNoData=maskNoData, cacheThisRead = True,
+                                                                    lonLims=lonLims, latLims=latLims)
+            if _ndSecondary is not None:
+                ndMask = ndMask + (secondaryArray == _ndSecondary)
+            if self._SpatialSummaryStat == CategoricalAggregationStats.PERCENTAGE:
+                dataArr = dataArr / 100.0
         else:
             raise ValueError("Unknown temporal anomaly")
-        expr = "(dataArr)"
+
+        # now build a string expression that represents what we need to do next with the array to apply anomaly and
+        # offset; this is because we are using numexpr for faster calculation and it takes a string representation
+        # of the python expression
+        expr = "dataArr"
         if isAnomaly:
             expr = "(" + expr + " - secondaryArray)"
-        if self._AdjustmentOffset != 0:
-            adj = self._AdjustmentOffset
-            expr = "(" + expr + " + adj)"
-        readyToTransform = ne.evaluate(expr)
-        if self._Transformer is None:
-            return readyToTransform
-        return self._Transformer.Apply(readyToTransform)
-
-        #if self._CubeLevel == CubeLevels.MONTHLY:
-        #    self.DataCube.ReadDataForDate(CubeLevels.MONTHLY, dataDate)
-        #elif self._CubeLevel == CubeLevels.ANNUAL:
-        #    self.DataCube.ReadDataForDate(CubeLevels.ANNUAL, dataDate)
-        #elif self._CubeLevel == CubeLevels.SYNOPTIC:
-        #    self.DataCube.ReadDataForDate(CubeLevels.SYNOPTIC, dataDate)
-
+            outArr = ne.evaluate(expr)
+        else:
+            outArr = dataArr
+        # now apply the transform, if there is one
+        if self._Transformer is not None:
+            outArr = self._Transformer.ApplyToData(outArr)
+        if isinstance(ndMask, numpy.ndarray):
+            outArr[ndMask] = _ndv
+        return (outArr, _gt, _proj, _ndv)
 
 
 
