@@ -15,11 +15,11 @@ T10B,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_L
 T10C,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,range,Synoptic,mean,,4
 T11,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,SD,Synoptic,mean,,2
 T12,LST_day,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Day,5km,SD,Synoptic,SD,,3
-T13,LST_night,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Night,5km,mean,Synoptic,mean,,
+T13,LST_night,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Night,5km,mean,Synoptic_Overall,mean,,
 T14,LST_night,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Night,5km,mean,Monthly,mean,Difference from synoptic annual,
 T15,LST_night,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Night,5km,min,Synoptic,SD,,4
 T16,LST_night,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Night,5km,range,Synoptic,mean,,2
-T17,LST_diurnal_diff,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Diurnal_Difference,5km,max,Synoptic,mean,,
+T17,LST_diurnal_diff,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Diurnal_Difference,5km,max,Synoptic_Overall,mean,,
 T18,LST_diurnal_diff,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Diurnal_Difference,5km,max,Monthly,mean,,
 T19,LST_diurnal_diff,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Diurnal_Difference,5km,mean,Monthly,mean,,
 T20,LST_diurnal_diff,\\map-fs1.ndph.ox.ac.uk\map_data\mastergrids\MODIS_Global\MOD11A2_LST\LST_Diurnal_Difference,5km,mean,Synoptic,mean,,1

@@ -17,7 +17,8 @@ class TransformTypes(Enum):
 
 
 class TransformAndAdjust:
-    def __init__(self, transformType, adjustmentOffset = 0, meanValue=None, stdValue=None, lambdaValue=None):
+    def __init__(self, transformType, adjustmentOffset = 0, meanValue=None, stdValue=None,
+                 thresholdValue=None, lambdaValue=None):
         if not isinstance(transformType, TransformTypes):
             transformType = TransformTypes(transformType)  # or raise valueerror
 
@@ -31,6 +32,14 @@ class TransformAndAdjust:
             if lambdaValue is None or lambdaValue == '':
                 raise ValueError("Lambda value is required for BoxCox transform")
             self._lambdaValue = float(lambdaValue)
+        if transformType == TransformTypes.T3:
+            if thresholdValue is None or thresholdValue == '':
+                raise ValueError("Threshold value is required for Reciprocal transform, or use string 'None'")
+            else:
+                try:
+                    self._thresholdValue = float(thresholdValue)
+                except:
+                    self._thresholdValue = "None"
         # TODO more checking, that they're the same size etc
         self.TransformType = transformType
         self.AdjustmentOffset = float(adjustmentOffset)
@@ -43,34 +52,48 @@ class TransformAndAdjust:
 
     def ApplyToData(self, dataArr):
 
-        adjOffset = self.AdjustmentOffset
+        adj = self.AdjustmentOffset
         if self.TransformType == TransformTypes.T1:
-            expr = "dataArr + adjOffset"
+            expr = "dataArr + adj"
         elif self.TransformType == TransformTypes.T2:
             meanValue = self._meanValue
             stdValue = self._stdValue
-            expr = "((dataArr + adjOffset) - meanValue) / stdValue"
+            expr = "((dataArr + adj) - meanValue) / stdValue"
         elif self.TransformType == TransformTypes.T3:
-            expr = "1.0 / (dataArr + adjOffset)"
+            thresh = self._thresholdValue
+            if isinstance(thresh,float):
+                if thresh <= 0:
+                    raise ValueError("Threshold value must be positive (absolute values will be tested against it)")
+                # the copious brackets seemed to be necessary to get numexpr to not whinge
+                expr = "where((dataArr+adj)<thresh, (1.0/thresh), (1.0/(dataArr+adj)))"
+                #expr = "where( (((dataArr+adj)<thresh) & ((dataArr+adj)>=0)), " \
+                #       "(1.0/thresh), " \
+                #       "where( ((abs(dataArr+adj)<thresh) & ((dataArr+adj)<0)), " \
+                #       "(1.0/(-thresh)), " \
+                #       "1.0/(dataArr+adj)))"
+            else:
+                expr = "1.0 / (dataArr + adj)"
         elif self.TransformType == TransformTypes.T4:
-            expr = "log10(dataArr + adjOffset)"
+            expr = "log10(where((dataArr + adj)<=0.00001,0.00001,(dataArr + adj)))"
         elif self.TransformType == TransformTypes.T5:
-            expr = "log(dataArr + adjOffset)"
+            expr = "log(where((dataArr + adj)<=0.00001,0.00001,(dataArr + adj)))"
         elif self.TransformType == TransformTypes.T6:
-            expr = "log((dataArr + adjOffset) + sqrt((dataArr + adjOffset) ** 2 + 1))"
+            expr = "log(where(((dataArr + adj) + sqrt((dataArr + adj) ** 2 + 1))<=0.00001 " +\
+                   ",0.00001" +\
+                   ",((dataArr + adj) + sqrt((dataArr + adj) ** 2 + 1))))"
         elif self.TransformType == TransformTypes.T7:
-            expr = "(dataArr + adjOffset) ** 2"
+            expr = "(dataArr + adj) ** 2"
         elif self.TransformType == TransformTypes.T8:
-            expr = "sqrt((dataArr + adjOffset))"
+            expr = "where((dataArr + adj)<0, 0, sqrt(dataArr + adj))"
         elif self.TransformType == TransformTypes.T9:
-            expr = "(dataArr + adjOffset) ** (1.0/3)"
+            expr = "where((dataArr + adj)<0, 0, (dataArr + adj) ** (1.0/3))"
         elif self.TransformType == TransformTypes.T10:
             lambdaValue = self._lambdaValue or None
-            expr = "(dataArr + adjOffset) ** lambdaValue"
+            expr = "where((dataArr + adj)<=0.00001, 0.00001 ** lambdaValue, (dataArr + adj) ** lambdaValue)"
         elif self.TransformType == TransformTypes.T11:
             meanValue = self._meanValue
             stdValue = self._stdValue
-            expr = "((dataArr + adjOffset) - meanValue) / stdValue"
+            expr = "abs(((dataArr + adj) - meanValue) / stdValue)"
         else:
             raise ValueError()
         self.log("Applying expression " + expr)

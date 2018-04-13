@@ -120,7 +120,7 @@ class CovariateVariableTerm:
         dataDate = self.GetOffsetDate(RequiredDate)
         # The Cube object figures out what file to read based on the CubeLevel and the Date (or "None"), including if
         # it's a static variable. Read the "main" data for this term / date
-        print("Requesting cube object to read data for actual date "+str(dataDate))
+        print("Output date is {0!s}; requesting cube object to read data for actual date {1!s}".format(RequiredDate, dataDate))
         dataArr, _gt, _proj, _ndv = self.DataCube.ReadDataForDate(cubeLevel, dataDate,
                                                                   maskNoData=maskNoData,
                                                                   lonLims=lonLims, latLims=latLims,
@@ -140,7 +140,7 @@ class CovariateVariableTerm:
         # from which this (presumably dynamic) term is differenced against. Use caching for the read of the synoptic
         # data so we don't have to re-read that file every time
         elif self._TemporalAnomalyType == TemporalAnomalyTypes.DIFF_SYNOPTIC_MONTHLY:
-            secondaryArray, _, _, _ndSecondary = self.DataCube.ReadDataForDate(CubeLevels.SYNOPTIC, dataDate,
+            secondaryArray, _, _, _ndSecondary = self.DataCube.ReadDataForDate(CubeLevels.SYNOPTIC_MONTHLY, dataDate,
                                                                     maskNoData=maskNoData, cacheThisRead = True,
                                                                     lonLims=lonLims, latLims=latLims)
             if _ndSecondary is not None:
@@ -148,7 +148,7 @@ class CovariateVariableTerm:
             if self._SpatialSummaryStat == CategoricalAggregationStats.PERCENTAGE:
                 dataArr = dataArr / 100.0
         elif self._TemporalAnomalyType == TemporalAnomalyTypes.DIFF_SYNOPTIC_ANNUAL:
-            secondaryArray, _, _, _ndSecondary = self.DataCube.ReadDataForDate(CubeLevels.SYNOPTIC, None,
+            secondaryArray, _, _, _ndSecondary = self.DataCube.ReadDataForDate(CubeLevels.SYNOPTIC_OVERALL, None,
                                                                     maskNoData=maskNoData, cacheThisRead = True,
                                                                     lonLims=lonLims, latLims=latLims)
             if _ndSecondary is not None:

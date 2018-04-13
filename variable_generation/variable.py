@@ -7,7 +7,6 @@ class MalariaCovariate:
     def __init__(self, Term1, Term2):
         assert isinstance(Term1, CovariateVariableTerm)
         assert isinstance(Term2, CovariateVariableTerm)
-        # todo define proper type for transforms, and check for it
         self.Term1 = Term1
         self.Term2 = Term2
 
