@@ -20,3 +20,16 @@ and filenames that were used last time round.
 Therefore we are re-implementing the code from scratch based on the content of the published paper
 and the existing code. The existing code can be found in the idl_code subfolder of this
 repository.
+
+This version is driven by two input CSV files, found in the data/ directory, which reflect the contents of
+two of the tables from the paper. These define the various "terms", as combinations of a
+particular covariate, temporal and spatial summary, and mathematical transform; and "variables" which are always the
+product of two terms.
+
+All covariates are expected to be in the standard mastergrids folder and filename convention and
+for a particular "root" folder the appropriate aggregation of the variable will be read
+automatically.
+
+The jupyter notebook provides sample code for creating the variable objects from the
+csv files, and using them to generate and save out the Pf covariates.
+
